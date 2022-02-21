@@ -1,4 +1,4 @@
-module Theme exposing (Attribute, Context, Element, button, colors, column, darken, fontSizes, grid, onCtrlEnter, onEnter, padding, row, sizes, spacing, wrappedRow)
+module Theme exposing (Attribute, Context, Element, border, button, colors, column, darken, fontSizes, grid, onCtrlEnter, onEnter, padding, row, sizes, spacing, wrappedRow)
 
 import Color
 import Element.WithContext as Element exposing (Color, el, none, rgb, rgba, shrink)
@@ -172,4 +172,9 @@ onCtrlEnter msg =
 
 button : List (Attribute msg) -> { onPress : Maybe msg, label : Element msg } -> Element msg
 button attrs =
-    Input.button (Border.width sizes.borderWidth :: padding :: attrs)
+    Input.button (border :: padding :: attrs)
+
+
+border : Attribute msg
+border =
+    Border.width sizes.borderWidth
