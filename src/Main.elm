@@ -2,6 +2,7 @@ module Main exposing (main)
 
 import Browser
 import Element.WithContext as Element exposing (fill, height, text, width)
+import Element.WithContext.Font as Font
 import Element.WithContext.Input as Input
 import List.Extra
 import Maybe.Extra
@@ -36,6 +37,10 @@ main =
                     [ Theme.fontSizes.normal
                     , width fill
                     , height fill
+                    , Font.family
+                        [ Font.typeface "Fira Code"
+                        , Font.monospace
+                        ]
                     ]
                     (view model)
         , update = update
