@@ -91,21 +91,22 @@ clean model =
                 [] ->
                     Nothing
 
-                [ s ] ->
-                    case String.toList s of
-                        [ c, '?' ] ->
-                            List.range 0 4
-                                |> List.map
-                                    (\i ->
-                                        String.repeat i "_" ++ String.fromChar c ++ String.repeat (4 - i) "_"
-                                    )
-                                |> Just
-
-                        _ ->
-                            Just cleaned
-
                 _ ->
-                    Just cleaned
+                    cleaned
+                        |> List.concatMap
+                            (\s ->
+                                case String.toList s of
+                                    [ c, '?' ] ->
+                                        List.range 0 4
+                                            |> List.map
+                                                (\i ->
+                                                    String.repeat i "_" ++ String.fromChar c ++ String.repeat (4 - i) "_"
+                                                )
+
+                                    _ ->
+                                        [ s ]
+                            )
+                        |> Just
     in
     { model | groups = List.filterMap cleanGroup model.groups }
 
