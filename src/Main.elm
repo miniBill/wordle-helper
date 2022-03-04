@@ -124,6 +124,8 @@ viewResults : List Group -> List (Element Msg)
 viewResults groups =
     groups
         |> List.foldl resultGroupStep [ List.repeat 5 '_' ]
+        |> List.sort
+        |> List.Extra.unique
         |> List.map viewResult
 
 
