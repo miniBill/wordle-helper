@@ -87,11 +87,25 @@ clean model =
                 cleaned =
                     List.Extra.filterNot String.isEmpty g
             in
-            if List.isEmpty cleaned then
-                Nothing
+            case cleaned of
+                [] ->
+                    Nothing
 
-            else
-                Just cleaned
+                [ s ] ->
+                    case String.toList s of
+                        [ c, '?' ] ->
+                            List.range 0 4
+                                |> List.map
+                                    (\i ->
+                                        String.repeat i "_" ++ String.fromChar c ++ String.repeat (4 - i) "_"
+                                    )
+                                |> Just
+
+                        _ ->
+                            Just cleaned
+
+                _ ->
+                    Just cleaned
     in
     { model | groups = List.filterMap cleanGroup model.groups }
 
