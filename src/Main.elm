@@ -1,7 +1,7 @@
 module Main exposing (main)
 
 import Browser
-import Element.WithContext as Element exposing (fill, height, text, width)
+import Element.WithContext as Element exposing (alignTop, fill, height, text, width)
 import Element.WithContext.Font as Font
 import Element.WithContext.Input as Input
 import List.Extra
@@ -118,7 +118,9 @@ view { groups } =
             (groups ++ [ [] ])
                 |> List.indexedMap viewGroup
     in
-    Theme.column [ Theme.padding ] (groupViews ++ viewResults groups)
+    Theme.column [ Theme.padding ] <|
+        Theme.wrappedRow [ Theme.padding, width fill ] groupViews
+            :: viewResults groups
 
 
 viewResults : List Group -> List (Element Msg)
@@ -170,7 +172,7 @@ viewGroup : Int -> Group -> Element Msg
 viewGroup groupIndex group =
     (group ++ [ "" ])
         |> List.indexedMap (viewLine groupIndex)
-        |> Theme.column [ Theme.border, Theme.padding ]
+        |> Theme.column [ Theme.border, Theme.padding, width fill, alignTop ]
 
 
 viewLine : Int -> Int -> String -> Element Msg
