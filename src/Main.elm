@@ -103,6 +103,30 @@ clean model =
                                                     String.repeat i "_" ++ String.fromChar c ++ String.repeat (4 - i) "_"
                                                 )
 
+                                    [ c, '-', d ] ->
+                                        case String.toInt (String.fromChar d) of
+                                            Nothing ->
+                                                [ s ]
+
+                                            Just di ->
+                                                List.range 0 4
+                                                    |> List.filterMap
+                                                        (\i ->
+                                                            if i == di then
+                                                                Nothing
+
+                                                            else
+                                                                Just <| String.repeat i "_" ++ String.fromChar c ++ String.repeat (4 - i) "_"
+                                                        )
+
+                                    [ c, d ] ->
+                                        case String.toInt (String.fromChar d) of
+                                            Nothing ->
+                                                [ s ]
+
+                                            Just i ->
+                                                [ String.repeat i "_" ++ String.fromChar c ++ String.repeat (4 - i) "_" ]
+
                                     _ ->
                                         [ s ]
                             )
