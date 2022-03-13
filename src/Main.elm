@@ -93,44 +93,43 @@ clean model =
 
                 _ ->
                     cleaned
-                        |> List.concatMap
-                            (\s ->
-                                case String.toList s of
-                                    [ c, '?' ] ->
-                                        List.range 0 4
-                                            |> List.map
-                                                (\i ->
-                                                    String.repeat i "_" ++ String.fromChar c ++ String.repeat (4 - i) "_"
-                                                )
-
-                                    [ c, '-', d ] ->
-                                        case String.toInt (String.fromChar d) of
-                                            Nothing ->
-                                                [ s ]
-
-                                            Just di ->
-                                                List.range 0 4
-                                                    |> List.filterMap
-                                                        (\i ->
-                                                            if i == di - 1 then
-                                                                Nothing
-
-                                                            else
-                                                                Just <| String.repeat i "_" ++ String.fromChar c ++ String.repeat (4 - i) "_"
-                                                        )
-
-                                    [ c, d ] ->
-                                        case String.toInt (String.fromChar d) of
-                                            Nothing ->
-                                                [ s ]
-
-                                            Just i ->
-                                                [ String.repeat (i + 1) "_" ++ String.fromChar c ++ String.repeat (5 - i) "_" ]
-
-                                    _ ->
-                                        [ s ]
-                            )
+                        |> List.concatMap expandShortcuts
                         |> Just
+
+        mask c i =
+            String.repeat i "_" ++ String.fromChar c ++ String.repeat (4 - i) "_"
+
+        expandShortcuts s =
+            case String.toList s of
+                [ c, '*' ] ->
+                    List.map (mask c) (List.range 0 4)
+
+                [ c, '-', d ] ->
+                    case String.toInt (String.fromChar d) of
+                        Nothing ->
+                            [ s ]
+
+                        Just di ->
+                            List.range 0 4
+                                |> List.filterMap
+                                    (\i ->
+                                        if i == di - 1 then
+                                            Nothing
+
+                                        else
+                                            Just <| mask c i
+                                    )
+
+                [ c, d ] ->
+                    case String.toInt (String.fromChar d) of
+                        Nothing ->
+                            [ s ]
+
+                        Just i ->
+                            [ mask c (i + 1) ]
+
+                _ ->
+                    [ s ]
     in
     { model | groups = List.filterMap cleanGroup model.groups }
 
