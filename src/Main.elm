@@ -112,7 +112,7 @@ clean model =
                                                 List.range 0 4
                                                     |> List.filterMap
                                                         (\i ->
-                                                            if i == di then
+                                                            if i == di - 1 then
                                                                 Nothing
 
                                                             else
@@ -125,7 +125,7 @@ clean model =
                                                 [ s ]
 
                                             Just i ->
-                                                [ String.repeat i "_" ++ String.fromChar c ++ String.repeat (4 - i) "_" ]
+                                                [ String.repeat (i + 1) "_" ++ String.fromChar c ++ String.repeat (5 - i) "_" ]
 
                                     _ ->
                                         [ s ]
