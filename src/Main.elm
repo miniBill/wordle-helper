@@ -130,7 +130,7 @@ clean model =
                             [ s ]
 
                         Just i ->
-                            [ mask c (i + 1) ]
+                            [ mask c (i - 1) ]
 
                 _ ->
                     [ s ]
