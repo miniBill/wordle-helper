@@ -25,6 +25,7 @@ type alias Group =
 
 type Msg
     = Edit Int Int String
+    | Compact
 
 
 main : Program Flags Model Msg
@@ -77,6 +78,9 @@ update msg model =
                         List.Extra.updateAt groupIndex updateGroup model.groups
             in
             ( clean { model | groups = newGroups }, Cmd.none )
+
+        Compact ->
+            ( { model | groups = [ getResults model.groups ] }, Cmd.none )
 
 
 clean : Model -> Model
@@ -143,16 +147,31 @@ view { groups } =
     in
     Theme.column [ Theme.padding ] <|
         Theme.wrappedRow [ Theme.padding, width fill ] groupViews
+            :: compactButton
             :: viewResults groups
+
+
+compactButton : Element Msg
+compactButton =
+    Theme.button []
+        { onPress = Just Compact
+        , label = text "Compact"
+        }
 
 
 viewResults : List Group -> List (Element Msg)
 viewResults groups =
+    getResults groups
+        |> List.map text
+
+
+getResults : List Group -> List String
+getResults groups =
     groups
         |> List.foldl resultGroupStep [ List.repeat 5 '_' ]
+        |> List.map String.fromList
         |> List.sort
         |> List.Extra.unique
-        |> List.map viewResult
 
 
 resultGroupStep : Group -> List (List Char) -> List (List Char)
@@ -184,11 +203,6 @@ combine l r =
                     _ ->
                         Nothing
             )
-
-
-viewResult : List Char -> Element msg
-viewResult result =
-    text <| String.fromList result
 
 
 viewGroup : Int -> Group -> Element Msg
