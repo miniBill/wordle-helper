@@ -26,6 +26,7 @@ type alias Group =
 type Msg
     = Edit Int Int String
     | Compact
+    | FullCompact
 
 
 main : Program Flags Model Msg
@@ -80,7 +81,48 @@ update msg model =
             ( clean { model | groups = newGroups }, Cmd.none )
 
         Compact ->
+            ( { model | groups = compact model.groups }, Cmd.none )
+
+        FullCompact ->
             ( { model | groups = [ getResults model.groups ] }, Cmd.none )
+
+
+compact : List Group -> List Group
+compact groups =
+    groups
+        |> compactSingles
+        |> removeImpossibles
+
+
+removeImpossibles : List Group -> List Group
+removeImpossibles groups =
+    groups
+        |> List.sortBy List.length
+        |> List.foldl
+            (\group acc ->
+                let
+                    filtered =
+                        group |> List.Extra.filterNot (\option -> List.isEmpty <| getResults ([ option ] :: acc))
+                in
+                filtered :: acc
+            )
+            []
+
+
+compactSingles : List Group -> List Group
+compactSingles groups =
+    groups
+        |> List.sortBy List.length
+        |> List.foldl
+            (\e acc ->
+                case e of
+                    [ _ ] ->
+                        [ getResults <| e :: acc ]
+
+                    _ ->
+                        e :: acc
+            )
+            []
 
 
 clean : Model -> Model
@@ -146,17 +188,18 @@ view { groups } =
                 |> List.indexedMap viewGroup
     in
     Theme.column [ Theme.padding ] <|
-        Theme.wrappedRow [ Theme.padding, width fill ] groupViews
-            :: compactButton
+        Theme.wrappedRow [ width fill ] groupViews
+            :: Theme.wrappedRow [ width fill ]
+                [ Theme.button []
+                    { onPress = Just Compact
+                    , label = text "Compact"
+                    }
+                , Theme.button []
+                    { onPress = Just FullCompact
+                    , label = text "FullCompact"
+                    }
+                ]
             :: viewResults groups
-
-
-compactButton : Element Msg
-compactButton =
-    Theme.button []
-        { onPress = Just Compact
-        , label = text "Compact"
-        }
 
 
 viewResults : List Group -> List (Element Msg)
