@@ -1,4 +1,4 @@
-module Theme exposing (Attribute, Context, Element, border, button, colors, column, darken, fontSizes, grid, onCtrlEnter, onEnter, padding, row, sizes, spacing, wrappedRow)
+module Theme exposing (Attribute, Context, Element, border, button, colors, column, darken, fontSizes, grid, lighten, onCtrlEnter, onEnter, padding, row, sizes, spacing, wrappedRow)
 
 import Color
 import Element.WithContext as Element exposing (Color, el, none, rgb, rgba, shrink)
@@ -69,9 +69,14 @@ colors =
     }
 
 
+lighten : Color -> Color
+lighten =
+    mapHsl (\c -> { c | lightness = 0.7 + 0.3 * c.lightness })
+
+
 darken : Color -> Color
 darken =
-    mapHsl (\c -> { c | lightness = 0.8 * c.lightness })
+    mapHsl (\c -> { c | lightness = 0.3 * c.lightness })
 
 
 type alias Hsla =

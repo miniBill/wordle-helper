@@ -35,6 +35,7 @@ type Msg
     | SelectGame Int
     | Compact
     | FullCompact
+    | ResetThis
 
 
 main : Program Flags Model Msg
@@ -70,57 +71,61 @@ init _ =
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case msg of
-        Edit data ->
-            let
-                updateGroup group =
-                    if data.line == List.length group then
-                        group ++ [ data.value ]
+    let
+        newModel =
+            case msg of
+                Edit data ->
+                    let
+                        updateGroup group =
+                            if data.line == List.length group then
+                                group ++ [ data.value ]
 
-                    else
-                        List.Extra.setAt data.line data.value group
+                            else
+                                List.Extra.setAt data.line data.value group
 
-                updateGame { groups } =
-                    if data.group == List.length groups then
-                        { groups = groups ++ [ [ data.value ] ] }
+                        updateGame { groups } =
+                            if data.group == List.length groups then
+                                { groups = groups ++ [ [ data.value ] ] }
 
-                    else
-                        { groups = List.Extra.updateAt data.group updateGroup groups }
+                            else
+                                { groups = List.Extra.updateAt data.group updateGroup groups }
 
-                newGames =
-                    if model.selectedGame == List.length model.games then
-                        model.games ++ [ { groups = [ [ data.value ] ] } ]
+                        newGames =
+                            if model.selectedGame == List.length model.games then
+                                model.games ++ [ { groups = [ [ data.value ] ] } ]
 
-                    else
-                        List.Extra.updateAt model.selectedGame updateGame model.games
+                            else
+                                List.Extra.updateAt model.selectedGame updateGame model.games
+                    in
+                    { model | games = newGames }
 
-                cleaned =
-                    { model | games = List.map clean newGames }
-            in
-            ( { cleaned
-                | selectedGame =
-                    min
-                        (List.length cleaned.games)
-                        cleaned.selectedGame
-              }
-            , Cmd.none
-            )
+                Compact ->
+                    { model | games = List.map compact model.games }
 
-        Compact ->
-            ( { model | games = List.map compact model.games }, Cmd.none )
+                FullCompact ->
+                    { model | games = List.map fullCompact model.games }
 
-        FullCompact ->
-            ( { model | games = List.map fullCompact model.games }, Cmd.none )
+                ResetThis ->
+                    { model | games = List.Extra.setAt model.selectedGame { groups = [] } model.games }
 
-        SelectGame index ->
-            ( { model
-                | selectedGame =
-                    min
-                        (List.length model.games)
-                        index
-              }
-            , Cmd.none
-            )
+                SelectGame index ->
+                    { model | selectedGame = index }
+    in
+    ( let
+        newGames =
+            newModel.games
+                |> List.map clean
+                |> List.Extra.dropWhileRight (\{ groups } -> List.isEmpty groups)
+      in
+      { newModel
+        | games = newGames
+        , selectedGame =
+            min
+                (List.length newGames)
+                newModel.selectedGame
+      }
+    , Cmd.none
+    )
 
 
 compact : Game -> Game
@@ -202,7 +207,7 @@ clean game =
                 [ c, '*' ] ->
                     List.map (mask c) (List.range 0 4)
 
-                [ c, '-', d ] ->
+                [ c, '-', '-', d ] ->
                     case String.toInt (String.fromChar d) of
                         Nothing ->
                             [ s ]
@@ -218,7 +223,7 @@ clean game =
                                             Just <| mask c i
                                     )
 
-                [ c, '-', '-', d ] ->
+                [ c, '-', d ] ->
                     case String.toInt (String.fromChar d) of
                         Nothing ->
                             [ s ]
@@ -227,13 +232,22 @@ clean game =
                             allPositions c
                                 |> List.filter (\p -> String.slice (di - 1) di p == "_")
 
-                [ c, d ] ->
+                [ c, '=', d ] ->
                     case String.toInt (String.fromChar d) of
                         Nothing ->
                             [ s ]
 
                         Just i ->
                             [ mask c (i - 1) ]
+
+                [ c, d ] ->
+                    case String.toInt (String.fromChar d) of
+                        Nothing ->
+                            [ s ]
+
+                        Just di ->
+                            allPositions c
+                                |> List.filter (\p -> String.slice (di - 1) di p == String.fromChar c)
 
                 _ ->
                     [ s ]
@@ -333,34 +347,35 @@ view { games, selectedGame } =
 gamePicker : Int -> List Game -> Element Msg
 gamePicker selectedIndex games =
     let
-        white =
-            rgb255 0xFF 0xFF 0xFF
-
-        green =
-            rgb255 0xD0 0xFF 0xD0
-
-        gray =
+        notWonColor =
             rgb255 0xC0 0xC0 0xC0
+
+        wonColor =
+            rgb255 0x00 0xFF 0x00
     in
     games
         |> List.indexedMap
             (\i game ->
+                let
+                    baseColor =
+                        case game.groups of
+                            [ [ solution ] ] ->
+                                if String.contains "_" solution || String.length solution < 5 then
+                                    notWonColor
+
+                                else
+                                    wonColor
+
+                            _ ->
+                                notWonColor
+                in
                 Theme.button
                     [ Background.color <|
                         if i == selectedIndex then
-                            gray
+                            baseColor
 
                         else
-                            case game.groups of
-                                [ [ solution ] ] ->
-                                    if String.contains "_" solution || String.length solution < 5 then
-                                        white
-
-                                    else
-                                        green
-
-                                _ ->
-                                    white
+                            Theme.lighten baseColor
                     ]
                     { onPress = Just <| SelectGame i
                     , label = text <| String.fromInt (i + 1)
@@ -385,7 +400,11 @@ viewGame { groups } =
                     }
                 , Theme.button []
                     { onPress = Just FullCompact
-                    , label = text "FullCompact"
+                    , label = text "Full Compact"
+                    }
+                , Theme.button []
+                    { onPress = Just ResetThis
+                    , label = text "Reset This Game"
                     }
                 ]
             :: viewResults groups
