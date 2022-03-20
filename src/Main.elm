@@ -103,7 +103,7 @@ update msg model =
                     { model | games = List.map compact model.games }
 
                 FullCompact ->
-                    { model | games = List.map fullCompact model.games }
+                    { model | games = List.Extra.updateAt model.selectedGame fullCompact model.games }
 
                 ResetThis ->
                     { model | games = List.Extra.setAt model.selectedGame { groups = [] } model.games }
@@ -201,11 +201,16 @@ clean game =
 
         expandShortcuts s =
             case String.toList s of
-                [ c, '?' ] ->
-                    allPositions c
-
                 [ c, '*' ] ->
                     List.map (mask c) (List.range 0 4)
+
+                [ c, '+', d ] ->
+                    case String.toInt (String.fromChar d) of
+                        Nothing ->
+                            [ s ]
+
+                        Just i ->
+                            [ mask c (i - 1) ]
 
                 [ c, '-', '-', d ] ->
                     case String.toInt (String.fromChar d) of
@@ -223,6 +228,9 @@ clean game =
                                             Just <| mask c i
                                     )
 
+                [ c, '?' ] ->
+                    allPositions c
+
                 [ c, '-', d ] ->
                     case String.toInt (String.fromChar d) of
                         Nothing ->
@@ -231,14 +239,6 @@ clean game =
                         Just di ->
                             allPositions c
                                 |> List.filter (\p -> String.slice (di - 1) di p == "_")
-
-                [ c, '=', d ] ->
-                    case String.toInt (String.fromChar d) of
-                        Nothing ->
-                            [ s ]
-
-                        Just i ->
-                            [ mask c (i - 1) ]
 
                 [ c, d ] ->
                     case String.toInt (String.fromChar d) of
@@ -396,15 +396,15 @@ viewGame { groups } =
             :: Theme.wrappedRow [ width fill ]
                 [ Theme.button []
                     { onPress = Just Compact
-                    , label = text "Compact"
+                    , label = text "Compact all games"
                     }
                 , Theme.button []
                     { onPress = Just FullCompact
-                    , label = text "Full Compact"
+                    , label = text "Full compact this game"
                     }
                 , Theme.button []
                     { onPress = Just ResetThis
-                    , label = text "Reset This Game"
+                    , label = text "Reset this game"
                     }
                 ]
             :: viewResults groups
