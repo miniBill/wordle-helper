@@ -137,15 +137,28 @@ filterImpossibleSubstrings : Game -> Game
 filterImpossibleSubstrings { groups } =
     { groups =
         groups
+            |> List.Extra.select
             |> List.map
-                (List.Extra.filterNot
-                    (\option ->
-                        List.any
-                            (\impossible ->
-                                String.contains impossible option
+                (\( group, others ) ->
+                    group
+                        |> List.Extra.filterNot
+                            (\option ->
+                                List.any
+                                    (\impossible ->
+                                        String.contains impossible option
+                                    )
+                                    Dictionary.impossibleSubstrings
+                                    || (getResults ([ option ] :: others)
+                                            |> List.all
+                                                (\result ->
+                                                    List.any
+                                                        (\impossible ->
+                                                            String.contains impossible result
+                                                        )
+                                                        Dictionary.impossibleSubstrings
+                                                )
+                                       )
                             )
-                            Dictionary.impossibleSubstrings
-                    )
                 )
     }
 
