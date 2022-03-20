@@ -1,6 +1,7 @@
 module Main exposing (main)
 
 import Browser
+import Dict
 import Dictionary
 import Element.WithContext as Element exposing (alignTop, fill, height, rgb255, text, width)
 import Element.WithContext.Background as Background
@@ -8,6 +9,7 @@ import Element.WithContext.Font as Font
 import Element.WithContext.Input as Input
 import List.Extra
 import Maybe.Extra
+import Set
 import Theme exposing (Context, Element)
 
 
@@ -173,14 +175,93 @@ compact { groups } =
     { groups =
         groups
             |> dedup
+            |> compactLetters
             |> removeImpossibles
             |> compactSingles
+            |> removeUseless
     }
+
+
+removeUseless : List Group -> List Group
+removeUseless groups =
+    groups
+        |> List.sortBy List.length
+        |> List.foldl
+            (\e acc ->
+                if getResults (e :: acc) == getResults acc then
+                    acc
+
+                else
+                    e :: acc
+            )
+            []
 
 
 dedup : List Group -> List Group
 dedup =
     List.map List.Extra.unique
+
+
+compactLetters : List Group -> List Group
+compactLetters groups =
+    groups
+        |> List.foldl
+            (\e ( dacc, lacc ) ->
+                case singleLetter e of
+                    Just s ->
+                        ( Dict.update s
+                            (\f ->
+                                case f of
+                                    Nothing ->
+                                        Just e
+
+                                    Just i ->
+                                        Just <| intersectGroups e i
+                            )
+                            dacc
+                        , lacc
+                        )
+
+                    Nothing ->
+                        ( dacc, e :: lacc )
+            )
+            ( Dict.empty, [] )
+        |> (\( dacc, lacc ) -> lacc ++ Dict.values dacc)
+
+
+intersectGroups : Group -> Group -> Group
+intersectGroups g1 g2 =
+    Set.toList <| Set.intersect (Set.fromList g1) (Set.fromList g2)
+
+
+singleLetter : Group -> Maybe Char
+singleLetter group =
+    let
+        isSingleLetter g =
+            case g |> String.toList |> List.Extra.unique |> List.Extra.filterNot ((==) '_') of
+                [ s ] ->
+                    Just s
+
+                _ ->
+                    Nothing
+
+        try l ts =
+            List.all (\t -> isSingleLetter t == Just l) ts
+    in
+    case group of
+        [] ->
+            Nothing
+
+        h :: ts ->
+            isSingleLetter h
+                |> Maybe.andThen
+                    (\l ->
+                        if try l ts then
+                            Just l
+
+                        else
+                            Nothing
+                    )
 
 
 removeImpossibles : List Group -> List Group
@@ -195,7 +276,6 @@ removeImpossibles groups =
                     )
                     group
             )
-        |> List.reverse
 
 
 compactSingles : List Group -> List Group
@@ -287,7 +367,7 @@ clean game =
                 _ ->
                     [ s ]
     in
-    { game | groups = List.filterMap cleanGroup game.groups }
+    { game | groups = List.map (List.map String.toUpper) <| List.filterMap cleanGroup game.groups }
 
 
 allPositions : Char -> List String
@@ -524,8 +604,12 @@ combine l r =
                     ( lc, '_' ) ->
                         Just lc
 
-                    _ ->
-                        Nothing
+                    ( lc, rc ) ->
+                        if lc == rc then
+                            Just lc
+
+                        else
+                            Nothing
             )
 
 
