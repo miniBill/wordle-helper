@@ -1,7 +1,8 @@
 module Main exposing (main)
 
 import Browser
-import Element.WithContext as Element exposing (alignTop, fill, height, text, width)
+import Element.WithContext as Element exposing (alignTop, fill, height, rgb255, text, width)
+import Element.WithContext.Background as Background
 import Element.WithContext.Font as Font
 import Element.WithContext.Input as Input
 import List.Extra
@@ -15,7 +16,13 @@ type alias Flags =
 
 type alias Model =
     { context : Context
-    , groups : List Group
+    , games : List Game
+    , selectedGame : Int
+    }
+
+
+type alias Game =
+    { groups : List Group
     }
 
 
@@ -24,7 +31,8 @@ type alias Group =
 
 
 type Msg
-    = Edit Int Int String
+    = Edit { group : Int, line : Int, value : String }
+    | SelectGame Int
     | Compact
     | FullCompact
 
@@ -53,7 +61,8 @@ main =
 init : Flags -> ( Model, Cmd Msg )
 init _ =
     ( { context = {}
-      , groups = []
+      , games = []
+      , selectedGame = 0
       }
     , Cmd.none
     )
@@ -62,51 +71,91 @@ init _ =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Edit groupIndex lineIndex line ->
+        Edit data ->
             let
-                updateGroup g =
-                    if lineIndex == List.length g then
-                        g ++ [ line ]
+                updateGroup group =
+                    if data.line == List.length group then
+                        group ++ [ data.value ]
 
                     else
-                        List.Extra.setAt lineIndex line g
+                        List.Extra.setAt data.line data.value group
 
-                newGroups =
-                    if groupIndex == List.length model.groups then
-                        model.groups ++ [ [ line ] ]
+                updateGame { groups } =
+                    if data.group == List.length groups then
+                        { groups = groups ++ [ [ data.value ] ] }
 
                     else
-                        List.Extra.updateAt groupIndex updateGroup model.groups
+                        { groups = List.Extra.updateAt data.group updateGroup groups }
+
+                newGames =
+                    if model.selectedGame == List.length model.games then
+                        model.games ++ [ { groups = [ [ data.value ] ] } ]
+
+                    else
+                        List.Extra.updateAt model.selectedGame updateGame model.games
+
+                cleaned =
+                    { model | games = List.map clean newGames }
             in
-            ( clean { model | groups = newGroups }, Cmd.none )
+            ( { cleaned
+                | selectedGame =
+                    min
+                        (List.length cleaned.games)
+                        cleaned.selectedGame
+              }
+            , Cmd.none
+            )
 
         Compact ->
-            ( { model | groups = compact model.groups }, Cmd.none )
+            ( { model | games = List.map compact model.games }, Cmd.none )
 
         FullCompact ->
-            ( { model | groups = [ getResults model.groups ] }, Cmd.none )
+            ( { model | games = List.map fullCompact model.games }, Cmd.none )
+
+        SelectGame index ->
+            ( { model
+                | selectedGame =
+                    min
+                        (List.length model.games)
+                        index
+              }
+            , Cmd.none
+            )
 
 
-compact : List Group -> List Group
-compact groups =
-    groups
-        |> compactSingles
-        |> removeImpossibles
+compact : Game -> Game
+compact { groups } =
+    { groups =
+        groups
+            |> dedup
+            |> removeImpossibles
+            |> compactSingles
+    }
+
+
+fullCompact : Game -> Game
+fullCompact { groups } =
+    { groups = [ getResults groups ] }
+
+
+dedup : List Group -> List Group
+dedup =
+    List.map List.Extra.unique
 
 
 removeImpossibles : List Group -> List Group
 removeImpossibles groups =
     groups
-        |> List.sortBy List.length
-        |> List.foldl
-            (\group acc ->
-                let
-                    filtered =
-                        group |> List.Extra.filterNot (\option -> List.isEmpty <| getResults ([ option ] :: acc))
-                in
-                filtered :: acc
+        |> List.Extra.select
+        |> List.map
+            (\( group, others ) ->
+                List.Extra.filterNot
+                    (\option ->
+                        List.isEmpty <| getResults ([ option ] :: others)
+                    )
+                    group
             )
-            []
+        |> List.reverse
 
 
 compactSingles : List Group -> List Group
@@ -125,8 +174,8 @@ compactSingles groups =
             []
 
 
-clean : Model -> Model
-clean model =
+clean : Game -> Game
+clean game =
     let
         cleanGroup g =
             let
@@ -147,6 +196,9 @@ clean model =
 
         expandShortcuts s =
             case String.toList s of
+                [ c, '?' ] ->
+                    allPositions c
+
                 [ c, '*' ] ->
                     List.map (mask c) (List.range 0 4)
 
@@ -166,6 +218,15 @@ clean model =
                                             Just <| mask c i
                                     )
 
+                [ c, '-', '-', d ] ->
+                    case String.toInt (String.fromChar d) of
+                        Nothing ->
+                            [ s ]
+
+                        Just di ->
+                            allPositions c
+                                |> List.filter (\p -> String.slice (di - 1) di p == "_")
+
                 [ c, d ] ->
                     case String.toInt (String.fromChar d) of
                         Nothing ->
@@ -177,17 +238,145 @@ clean model =
                 _ ->
                     [ s ]
     in
-    { model | groups = List.filterMap cleanGroup model.groups }
+    { game | groups = List.filterMap cleanGroup game.groups }
+
+
+allPositions : Char -> List String
+allPositions c =
+    let
+        mask i =
+            String.repeat i "_" ++ String.fromChar c ++ String.repeat (4 - i) "_"
+
+        range =
+            List.range 0 4
+
+        one =
+            List.map mask range
+
+        two =
+            one
+                |> List.concatMap
+                    (\l ->
+                        let
+                            ls =
+                                String.toList l
+                        in
+                        one
+                            |> List.filterMap
+                                (\r ->
+                                    let
+                                        rs =
+                                            String.toList r
+                                    in
+                                    combine ls rs
+                                )
+                            |> List.map String.fromList
+                    )
+
+        three =
+            two
+                |> List.concatMap
+                    (\l ->
+                        let
+                            ls =
+                                String.toList l
+                        in
+                        one
+                            |> List.filterMap
+                                (\r ->
+                                    let
+                                        rs =
+                                            String.toList r
+                                    in
+                                    combine ls rs
+                                )
+                            |> List.map String.fromList
+                    )
+
+        four =
+            three
+                |> List.concatMap
+                    (\l ->
+                        let
+                            ls =
+                                String.toList l
+                        in
+                        one
+                            |> List.filterMap
+                                (\r ->
+                                    let
+                                        rs =
+                                            String.toList r
+                                    in
+                                    combine ls rs
+                                )
+                            |> List.map String.fromList
+                    )
+    in
+    List.Extra.unique <| one ++ two ++ three ++ four ++ [ String.fromList <| List.repeat 5 c ]
 
 
 view : Model -> Element Msg
-view { groups } =
+view { games, selectedGame } =
+    let
+        gamesPlus =
+            games ++ [ { groups = [] } ]
+    in
+    Theme.column [ Theme.padding ]
+        [ gamePicker selectedGame gamesPlus
+        , List.Extra.getAt selectedGame gamesPlus
+            |> Maybe.map viewGame
+            |> Maybe.withDefault (text "Pick a valid game")
+        ]
+
+
+gamePicker : Int -> List Game -> Element Msg
+gamePicker selectedIndex games =
+    let
+        white =
+            rgb255 0xFF 0xFF 0xFF
+
+        green =
+            rgb255 0xD0 0xFF 0xD0
+
+        gray =
+            rgb255 0xC0 0xC0 0xC0
+    in
+    games
+        |> List.indexedMap
+            (\i game ->
+                Theme.button
+                    [ Background.color <|
+                        if i == selectedIndex then
+                            gray
+
+                        else
+                            case game.groups of
+                                [ [ solution ] ] ->
+                                    if String.contains "_" solution || String.length solution < 5 then
+                                        white
+
+                                    else
+                                        green
+
+                                _ ->
+                                    white
+                    ]
+                    { onPress = Just <| SelectGame i
+                    , label = text <| String.fromInt (i + 1)
+                    }
+            )
+        |> Theme.wrappedRow []
+
+
+viewGame : Game -> Element Msg
+viewGame { groups } =
     let
         groupViews =
             (groups ++ [ [] ])
                 |> List.indexedMap viewGroup
     in
-    Theme.column [ Theme.padding ] <|
+    Theme.column [] <|
         Theme.wrappedRow [ width fill ] groupViews
             :: Theme.wrappedRow [ width fill ]
                 [ Theme.button []
@@ -259,7 +448,7 @@ viewLine : Int -> Int -> String -> Element Msg
 viewLine groupIndex lineIndex line =
     Input.text [ width fill ]
         { text = line
-        , onChange = Edit groupIndex lineIndex
+        , onChange = \newValue -> Edit { group = groupIndex, line = lineIndex, value = newValue }
         , label = Input.labelHidden ""
         , placeholder = Nothing
         }
