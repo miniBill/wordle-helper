@@ -1,6 +1,7 @@
 module Main exposing (main)
 
 import Browser
+import Dictionary exposing (dictionary)
 import Element.WithContext as Element exposing (alignTop, fill, height, rgb255, text, width)
 import Element.WithContext.Background as Background
 import Element.WithContext.Font as Font
@@ -36,6 +37,7 @@ type Msg
     | Compact
     | FullCompact
     | ResetThis
+    | FilterImpossibleSubstrings
 
 
 main : Program Flags Model Msg
@@ -102,6 +104,9 @@ update msg model =
                 Compact ->
                     { model | games = List.map compact model.games }
 
+                FilterImpossibleSubstrings ->
+                    { model | games = List.map filterImpossibleSubstrings model.games }
+
                 FullCompact ->
                     { model | games = List.Extra.updateAt model.selectedGame fullCompact model.games }
 
@@ -128,6 +133,28 @@ update msg model =
     )
 
 
+filterImpossibleSubstrings : Game -> Game
+filterImpossibleSubstrings { groups } =
+    { groups =
+        groups
+            |> List.map
+                (List.Extra.filterNot
+                    (\option ->
+                        List.any
+                            (\impossible ->
+                                String.contains impossible option
+                            )
+                            Dictionary.impossibleSubstrings
+                    )
+                )
+    }
+
+
+fullCompact : Game -> Game
+fullCompact { groups } =
+    { groups = [ getResults groups ] }
+
+
 compact : Game -> Game
 compact { groups } =
     { groups =
@@ -136,11 +163,6 @@ compact { groups } =
             |> removeImpossibles
             |> compactSingles
     }
-
-
-fullCompact : Game -> Game
-fullCompact { groups } =
-    { groups = [ getResults groups ] }
 
 
 dedup : List Group -> List Group
@@ -357,6 +379,18 @@ gamePicker selectedIndex games =
         |> List.indexedMap
             (\i game ->
                 let
+                    hint =
+                        getResults game.groups
+                            |> List.Extra.foldl1 intersect
+                            |> Maybe.withDefault ""
+                            |> (\s ->
+                                    if s == "" || s == "_____" then
+                                        ""
+
+                                    else
+                                        " " ++ s
+                               )
+
                     baseColor =
                         case game.groups of
                             [ [ solution ] ] ->
@@ -378,10 +412,32 @@ gamePicker selectedIndex games =
                             Theme.lighten baseColor
                     ]
                     { onPress = Just <| SelectGame i
-                    , label = text <| String.fromInt (i + 1)
+                    , label = text <| String.fromInt (i + 1) ++ hint
                     }
             )
         |> Theme.wrappedRow []
+
+
+intersect : String -> String -> String
+intersect l r =
+    let
+        ls =
+            String.toList l
+
+        rs =
+            String.toList r
+    in
+    String.fromList <|
+        List.map2
+            (\x y ->
+                if x == y then
+                    x
+
+                else
+                    '_'
+            )
+            ls
+            rs
 
 
 viewGame : Game -> Element Msg
@@ -396,7 +452,11 @@ viewGame { groups } =
             :: Theme.wrappedRow [ width fill ]
                 [ Theme.button []
                     { onPress = Just Compact
-                    , label = text "Compact all games"
+                    , label = text "Compact"
+                    }
+                , Theme.button []
+                    { onPress = Just FilterImpossibleSubstrings
+                    , label = text "Filter impossible substrings"
                     }
                 , Theme.button []
                     { onPress = Just FullCompact
