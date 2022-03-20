@@ -1,7 +1,7 @@
 module Main exposing (main)
 
 import Browser
-import Dictionary exposing (dictionary)
+import Dictionary
 import Element.WithContext as Element exposing (alignTop, fill, height, rgb255, text, width)
 import Element.WithContext.Background as Background
 import Element.WithContext.Font as Font
@@ -448,25 +448,25 @@ viewGame { groups } =
                 |> List.indexedMap viewGroup
     in
     Theme.column [] <|
-        Theme.wrappedRow [ width fill ] groupViews
-            :: Theme.wrappedRow [ width fill ]
-                [ Theme.button []
-                    { onPress = Just Compact
-                    , label = text "Compact"
-                    }
-                , Theme.button []
-                    { onPress = Just FilterImpossibleSubstrings
-                    , label = text "Filter impossible substrings"
-                    }
-                , Theme.button []
-                    { onPress = Just FullCompact
-                    , label = text "Full compact this game"
-                    }
-                , Theme.button []
-                    { onPress = Just ResetThis
-                    , label = text "Reset this game"
-                    }
-                ]
+        Theme.wrappedRow [ width fill ]
+            [ Theme.button []
+                { onPress = Just Compact
+                , label = text "Compact"
+                }
+            , Theme.button []
+                { onPress = Just FilterImpossibleSubstrings
+                , label = text "Filter impossible substrings"
+                }
+            , Theme.button []
+                { onPress = Just FullCompact
+                , label = text "Full compact this game"
+                }
+            , Theme.button []
+                { onPress = Just ResetThis
+                , label = text "Reset this game"
+                }
+            ]
+            :: Theme.wrappedRow [ width fill ] groupViews
             :: viewResults groups
 
 
