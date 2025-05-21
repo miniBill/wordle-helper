@@ -4,9 +4,10 @@
 		"build": "pnpx parcel build src/index.html"
 	},
 	"devDependencies": {
-		"@parcel/core": "^2.4.0",
-		"@parcel/transformer-elm": "^2.4.0",
-		"elm": "^0.19.1-5",
-		"parcel": "^2.4.0"
-	}
+		"@parcel/core": "^2.15.1",
+		"@parcel/transformer-elm": "^2.15.1",
+		"elm": "^0.19.1-6",
+		"parcel": "^2.15.1"
+	},
+	"packageManager": "yarn@1.22.21+sha1.1959a18351b811cdeedbd484a8f86c3cc3bbaf72"
 }
