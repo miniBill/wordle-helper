@@ -16,22 +16,42 @@ type alias Complete =
     Bool
 
 
+gray : List Char
+gray =
+    [ 'q', 'w', 'j', 'l', 'z', 'x', 'b' ]
+
+
+yellow : List Char
+yellow =
+    [ 'e', 'd', 'n' ]
+
+
 all : List Char
 all =
-    [ 'e', 'a', 'n', 'h', 'q', 'j', 'z', 'x', 'b' ]
-
-
-last : List Char
-last =
-    [ 'a', 'h', 'q', 'j', 'z', 'x', 'b' ]
+    yellow ++ gray
 
 
 today : Regex
 today =
     Alternative
-        [ Concat [ Char 'a', Class all, Char 'n', Char 'e', Class last ]
-        , Concat [ Class all, Char 'a', Char 'n', Char 'e', Class last ]
-        , Concat [ Class all, Class all, Char 'n', Char 'e', Char 'a' ]
+        [ Concat [ Char 'e', Char 'd', Class gray, Char 'n', Class all ]
+        , Concat [ Char 'e', Char 'd', Class gray, Class all, Char 'n' ]
+        , Concat [ Char 'e', Char 'n', Class gray, Char 'd', Class all ]
+        , Concat [ Char 'e', Class all, Class gray, Char 'd', Char 'n' ]
+        , Concat [ Char 'e', Char 'n', Class gray, Class all, Char 'd' ]
+        , Concat [ Char 'e', Class all, Class gray, Char 'n', Char 'd' ]
+        , Concat [ Char 'd', Char 'n', Char 'e', Class all, Class all ]
+        , Concat [ Char 'd', Class all, Char 'e', Char 'n', Class all ]
+        , Concat [ Char 'd', Class all, Char 'e', Class all, Char 'n' ]
+        , Concat [ Char 'n', Char 'd', Char 'e', Class all, Class all ]
+        , Concat [ Class all, Char 'd', Char 'e', Char 'n', Class all ]
+        , Concat [ Class all, Char 'd', Char 'e', Class all, Char 'n' ]
+        , Concat [ Char 'n', Class all, Char 'e', Char 'd', Class all ]
+        , Concat [ Class all, Char 'n', Char 'e', Char 'd', Class all ]
+        , Concat [ Class all, Class all, Char 'e', Char 'd', Char 'n' ]
+        , Concat [ Char 'n', Class all, Char 'e', Class all, Char 'd' ]
+        , Concat [ Class all, Char 'n', Char 'e', Class all, Char 'd' ]
+        , Concat [ Class all, Class all, Char 'e', Char 'n', Char 'd' ]
         ]
 
 
