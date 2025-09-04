@@ -3,6 +3,7 @@ module InverseRegex exposing (main)
 import FastDict
 import FastSet as Set exposing (Set)
 import Html exposing (Html)
+import List.Extra
 
 
 type Regex
@@ -18,7 +19,7 @@ type alias Complete =
 
 gray : List Char
 gray =
-    [ 'q', 'w', 'j', 'l', 'z', 'x', 'b' ]
+    [ 'l', 'b', 'q', 'w', 'j', 'z', 'x' ]
 
 
 yellow : List Char
@@ -31,27 +32,32 @@ all =
     yellow ++ gray
 
 
+nonE : List Char
+nonE =
+    List.Extra.remove 'e' all
+
+
 today : Regex
 today =
     Alternative
-        [ Concat [ Char 'e', Char 'd', Class gray, Char 'n', Class all ]
-        , Concat [ Char 'e', Char 'd', Class gray, Class all, Char 'n' ]
-        , Concat [ Char 'e', Char 'n', Class gray, Char 'd', Class all ]
-        , Concat [ Char 'e', Class all, Class gray, Char 'd', Char 'n' ]
-        , Concat [ Char 'e', Char 'n', Class gray, Class all, Char 'd' ]
-        , Concat [ Char 'e', Class all, Class gray, Char 'n', Char 'd' ]
-        , Concat [ Char 'd', Char 'n', Char 'e', Class all, Class all ]
-        , Concat [ Char 'd', Class all, Char 'e', Char 'n', Class all ]
-        , Concat [ Char 'd', Class all, Char 'e', Class all, Char 'n' ]
-        , Concat [ Char 'n', Char 'd', Char 'e', Class all, Class all ]
-        , Concat [ Class all, Char 'd', Char 'e', Char 'n', Class all ]
-        , Concat [ Class all, Char 'd', Char 'e', Class all, Char 'n' ]
-        , Concat [ Char 'n', Class all, Char 'e', Char 'd', Class all ]
-        , Concat [ Class all, Char 'n', Char 'e', Char 'd', Class all ]
-        , Concat [ Class all, Class all, Char 'e', Char 'd', Char 'n' ]
-        , Concat [ Char 'n', Class all, Char 'e', Class all, Char 'd' ]
-        , Concat [ Class all, Char 'n', Char 'e', Class all, Char 'd' ]
-        , Concat [ Class all, Class all, Char 'e', Char 'n', Char 'd' ]
+        [ Concat [ Char 'd', Char 'n', Char 'e', Class nonE, Class nonE ]
+        , Concat [ Char 'd', Class nonE, Char 'e', Char 'n', Class nonE ]
+        , Concat [ Char 'd', Class nonE, Char 'e', Class nonE, Char 'n' ]
+        , Concat [ Char 'e', Char 'd', Class ('e' :: gray), Char 'n', Class nonE ]
+        , Concat [ Char 'e', Char 'd', Class ('e' :: gray), Class nonE, Char 'n' ]
+        , Concat [ Char 'e', Char 'n', Class ('e' :: gray), Char 'd', Class nonE ]
+        , Concat [ Char 'e', Char 'n', Class ('e' :: gray), Class nonE, Char 'd' ]
+        , Concat [ Char 'e', Class nonE, Class ('e' :: gray), Char 'd', Char 'n' ]
+        , Concat [ Char 'e', Class nonE, Class ('e' :: gray), Char 'n', Char 'd' ]
+        , Concat [ Char 'n', Char 'd', Char 'e', Class nonE, Class nonE ]
+        , Concat [ Char 'n', Class nonE, Char 'e', Char 'd', Class nonE ]
+        , Concat [ Char 'n', Class nonE, Char 'e', Class nonE, Char 'd' ]
+        , Concat [ Class all, Char 'd', Char 'e', Char 'n', Class nonE ]
+        , Concat [ Class all, Char 'd', Char 'e', Class nonE, Char 'n' ]
+        , Concat [ Class all, Char 'n', Char 'e', Char 'd', Class nonE ]
+        , Concat [ Class all, Char 'n', Char 'e', Class nonE, Char 'd' ]
+        , Concat [ Class all, Class nonE, Char 'e', Char 'd', Char 'n' ]
+        , Concat [ Class all, Class nonE, Char 'e', Char 'n', Char 'd' ]
         ]
 
 
@@ -196,6 +202,6 @@ concat budget c =
 main : Html msg
 main =
     today
-        |> generate 1000
+        |> generate 2000
         |> List.map (\line -> Html.li [] [ Html.text line ])
         |> Html.ul []
