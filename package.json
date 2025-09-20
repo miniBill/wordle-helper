@@ -1,13 +1,8 @@
 {
-	"scripts": {
-		"start": "pnpx parcel src/index.html",
-		"build": "pnpx parcel build src/index.html"
-	},
-	"devDependencies": {
-		"@parcel/core": "^2.15.1",
-		"@parcel/transformer-elm": "^2.15.1",
-		"elm": "^0.19.1-6",
-		"parcel": "^2.15.1"
-	},
-	"packageManager": "yarn@1.22.21+sha1.1959a18351b811cdeedbd484a8f86c3cc3bbaf72"
+    "scripts": {
+        "start": "elm-watch hot"
+    },
+    "devDependencies": {
+        "elm-watch": "^2.0.0-beta.7"
+    }
 }
