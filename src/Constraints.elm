@@ -9,7 +9,7 @@ gray : List Char
 gray =
     [ 'q'
     , 'd'
-    , 'g'
+    , 'f'
     , 'j'
     , 'k'
     , 'z'
@@ -20,16 +20,16 @@ gray =
 
 green : Dict Int Char
 green =
-    [ ( 1, 'e' ) ]
+    [ ( 1, 'r' )
+    , ( 2, 'i' )
+    , ( 3, 't' )
+    ]
         |> Dict.fromList
 
 
 yellow : List ( Char, List Int )
 yellow =
-    [ ( 'r', [ 1, 2, 3 ] )
-    , ( 'e', [ 4 ] )
-    , ( 'f', [ 3, 4 ] )
-    ]
+    []
 
 
 possible : List String
