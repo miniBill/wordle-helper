@@ -80,15 +80,16 @@ unlikely =
     , "ao"
     , "ea"
     , "ee"
-    , "rz"
-    , "oa"
     , "fd"
+    , "oa"
+    , "pp"
     , "rj"
+    , "rq"
     , "rr"
+    , "rz"
     , "tt"
     , "uu"
     , "yq"
-    , "rq"
     ]
 
 
