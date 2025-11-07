@@ -8,28 +8,30 @@ import List.Extra
 gray : List Char
 gray =
     [ 'q'
-    , 'd'
-    , 'f'
     , 'j'
     , 'k'
+    , 'l'
     , 'z'
     , 'x'
     , 'v'
+    , 'b'
+    , 'm'
     ]
 
 
 green : Dict Int Char
 green =
-    [ ( 1, 'r' )
-    , ( 2, 'i' )
-    , ( 3, 't' )
+    [ ( 0, 'p' )
     ]
         |> Dict.fromList
 
 
 yellow : List ( Char, List Int )
 yellow =
-    []
+    [ ( 'r', [ 1 ] )
+    , ( 'i', [ 1, 2 ] )
+    , ( 'e', [ 4 ] )
+    ]
 
 
 possible : List String
@@ -58,6 +60,86 @@ possible =
                 else
                     Nothing
             )
+        |> List.sortBy
+            (\q ->
+                if List.any (\w -> String.contains w q) veryUnlikely then
+                    999
+
+                else if List.any (\w -> String.contains w q) unlikely then
+                    100
+
+                else
+                    0
+            )
+
+
+unlikely : List String
+unlikely =
+    [ "aa"
+    , "ae"
+    , "ao"
+    , "ea"
+    , "ee"
+    , "rz"
+    , "oa"
+    , "fd"
+    , "rj"
+    , "rr"
+    , "tt"
+    , "uu"
+    , "yq"
+    , "rq"
+    ]
+
+
+veryUnlikely : List String
+veryUnlikely =
+    [ "aeo"
+    , "cch"
+    , "cdh"
+    , "chh"
+    , "crh"
+    , "dm"
+    , "dx"
+    , "dz"
+    , "eee"
+    , "fdy"
+    , "fgy"
+    , "fj"
+    , "fky"
+    , "fmy"
+    , "fv"
+    , "fx"
+    , "hch"
+    , "hll"
+    , "jy"
+    , "kd"
+    , "ldr"
+    , "lll"
+    , "lqr"
+    , "lrq"
+    , "lrv"
+    , "lvr"
+    , "lxr"
+    , "lyq"
+    , "mhl"
+    , "ouo"
+    , "ppr"
+    , "qrq"
+    , "rfd"
+    , "rmv"
+    , "rmx"
+    , "uuu"
+    , "xhl"
+    , "ydy"
+    , "yfy"
+    , "ygy"
+    , "yj"
+    , "yky"
+    , "yxy"
+    , "yy"
+    , "zvr"
+    ]
 
 
 respectsGreen : List Char -> Bool
